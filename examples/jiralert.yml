@@ -4,14 +4,15 @@ defaults:
   # API access fields.
   api_url: https://jiralert.atlassian.net
   user: jiralert
-  password: 'JIRAlert'
+  # Get password from the $PASSWORD environment variable.
+  password: $(PASSWORD)
   # Alternatively to user and password use a Personal Access Token
   # personal_access_token: "Your Personal Access Token". See https://confluence.atlassian.com/enterprise/using-personal-access-tokens-1026032365.html
 
   # The type of JIRA issue to create. Required.
   issue_type: Bug
   # Issue priority. Optional.
-  priority: Critical
+  priority: '{{ template "jira.priority" . }}'
   # Go template invocation for generating the summary. Required.
   summary: '{{ template "jira.summary" . }}'
   # Go template invocation for generating the description. Optional.
