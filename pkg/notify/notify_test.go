@@ -125,27 +125,26 @@ func (f *fakeJira) Create(issue *jira.Issue) (*jira.Issue, *jira.Response, error
 }
 
 func (f *fakeJira) UpdateWithOptions(old *jira.Issue, _ *jira.UpdateQueryOptions) (*jira.Issue, *jira.Response, error) {
-       issue, ok := f.issuesByKey[old.Key]
-       if !ok {
-	       return nil, nil, errors.Errorf("no such issue %s", old.Key)
-       }
+	issue, ok := f.issuesByKey[old.Key]
+	if !ok {
+		return nil, nil, errors.Errorf("no such issue %s", old.Key)
+	}
 
-       if old.Fields.Summary != "" {
-	       issue.Fields.Summary = old.Fields.Summary
-       }
+	if old.Fields.Summary != "" {
+		issue.Fields.Summary = old.Fields.Summary
+	}
 
-       if old.Fields.Priority != nil {
-	       issue.Fields.Priority = old.Fields.Priority
-       }
+	if old.Fields.Priority != nil {
+		issue.Fields.Priority = old.Fields.Priority
+	}
 
-       if old.Fields.Description != "" {
-	       issue.Fields.Description = old.Fields.Description
-       }
+	if old.Fields.Description != "" {
+		issue.Fields.Description = old.Fields.Description
+	}
 
-       f.issuesByKey[issue.Key] = issue
-       return issue, nil, nil
+	f.issuesByKey[issue.Key] = issue
+	return issue, nil, nil
 }
-
 
 func (f *fakeJira) AddComment(issueID string, comment *jira.Comment) (*jira.Comment, *jira.Response, error) {
 	f.issuesByKey[issueID].Fields.Comments.Comments = append(f.issuesByKey[issueID].Fields.Comments.Comments, comment)

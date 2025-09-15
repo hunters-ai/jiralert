@@ -2,6 +2,8 @@ module github.com/prometheus-community/jiralert
 
 go 1.23.0
 
+toolchain go1.23.12
+
 require (
 	github.com/andygrunwald/go-jira v1.16.1
 	github.com/go-kit/log v0.2.1
