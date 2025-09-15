@@ -6,7 +6,7 @@
 // http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
+// distributed under the License is distributed on an "AS IS" BASIS.
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
@@ -125,25 +125,69 @@ func (f *fakeJira) Create(issue *jira.Issue) (*jira.Issue, *jira.Response, error
 }
 
 func (f *fakeJira) UpdateWithOptions(old *jira.Issue, _ *jira.UpdateQueryOptions) (*jira.Issue, *jira.Response, error) {
-	issue, ok := f.issuesByKey[old.Key]
-	if !ok {
-		return nil, nil, errors.Errorf("no such issue %s", old.Key)
-	}
+       issue, ok := f.issuesByKey[old.Key]
+       if !ok {
+	       return nil, nil, errors.Errorf("no such issue %s", old.Key)
+       }
 
-	if old.Fields.Summary != "" {
-		issue.Fields.Summary = old.Fields.Summary
-	}
+       if old.Fields.Summary != "" {
+	       issue.Fields.Summary = old.Fields.Summary
+       }
 
-	if old.Fields.Priority != nil {
-		issue.Fields.Priority = old.Fields.Priority
-	}
+       if old.Fields.Priority != nil {
+	       issue.Fields.Priority = old.Fields.Priority
+       }
 
-	if old.Fields.Description != "" {
-		issue.Fields.Description = old.Fields.Description
-	}
+       if old.Fields.Description != "" {
+	       issue.Fields.Description = old.Fields.Description
+       }
 
-	f.issuesByKey[issue.Key] = issue
-	return issue, nil, nil
+       f.issuesByKey[issue.Key] = issue
+       return issue, nil, nil
+}
+
+func (f *fakeJira) SearchV2JQL(jql string, options *jira.SearchOptions) ([]jira.Issue, *jira.Response, error) {
+       var issues []jira.Issue
+       for _, key := range f.keysByQuery[jql] {
+	       issue := jira.Issue{Key: key, Fields: &jira.IssueFields{}}
+	       for _, field := range options.Fields {
+		       switch field {
+		       case "summary":
+			       issue.Fields.Summary = f.issuesByKey[key].Fields.Summary
+		       case "description":
+			       issue.Fields.Description = f.issuesByKey[key].Fields.Description
+		       case "resolution":
+			       if f.issuesByKey[key].Fields.Resolution == nil {
+				       continue
+			       }
+			       issue.Fields.Resolution = &jira.Resolution{
+				       Name: f.issuesByKey[key].Fields.Resolution.Name,
+			       }
+		       case "resolutiondate":
+			       issue.Fields.Resolutiondate = f.issuesByKey[key].Fields.Resolutiondate
+		       case "status":
+			       issue.Fields.Status = &jira.Status{
+				       StatusCategory: f.issuesByKey[key].Fields.Status.StatusCategory,
+			       }
+		       case "priority":
+			       if f.issuesByKey[key].Fields.Priority != nil {
+				       issue.Fields.Priority = &jira.Priority{
+					       Name: f.issuesByKey[key].Fields.Priority.Name,
+				       }
+			       }
+		       }
+	       }
+	       issues = append(issues, issue)
+       }
+
+       sort.Slice(issues, func(i, j int) bool {
+	       return time.Time(issues[i].Fields.Resolutiondate).After(time.Time(issues[j].Fields.Resolutiondate))
+       })
+
+       if len(issues) > options.MaxResults {
+	       issues = issues[:options.MaxResults]
+       }
+       return issues, nil, nil
 }
 
 func (f *fakeJira) AddComment(issueID string, comment *jira.Comment) (*jira.Comment, *jira.Response, error) {
