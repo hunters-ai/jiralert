@@ -52,7 +52,7 @@ func newTestFakeJira() *fakeJira {
 	}
 }
 
-func (f *fakeJira) Search(jql string, options *jira.SearchOptions) ([]jira.Issue, *jira.Response, error) {
+func (f *fakeJira) SearchV2JQL(jql string, options *jira.SearchOptionsV2) ([]jira.Issue, *jira.Response, error) {
 	var issues []jira.Issue
 	for _, key := range f.keysByQuery[jql] {
 		issue := jira.Issue{Key: key, Fields: &jira.IssueFields{}}
@@ -146,49 +146,6 @@ func (f *fakeJira) UpdateWithOptions(old *jira.Issue, _ *jira.UpdateQueryOptions
        return issue, nil, nil
 }
 
-func (f *fakeJira) SearchV2JQL(jql string, options *jira.SearchOptions) ([]jira.Issue, *jira.Response, error) {
-       var issues []jira.Issue
-       for _, key := range f.keysByQuery[jql] {
-	       issue := jira.Issue{Key: key, Fields: &jira.IssueFields{}}
-	       for _, field := range options.Fields {
-		       switch field {
-		       case "summary":
-			       issue.Fields.Summary = f.issuesByKey[key].Fields.Summary
-		       case "description":
-			       issue.Fields.Description = f.issuesByKey[key].Fields.Description
-		       case "resolution":
-			       if f.issuesByKey[key].Fields.Resolution == nil {
-				       continue
-			       }
-			       issue.Fields.Resolution = &jira.Resolution{
-				       Name: f.issuesByKey[key].Fields.Resolution.Name,
-			       }
-		       case "resolutiondate":
-			       issue.Fields.Resolutiondate = f.issuesByKey[key].Fields.Resolutiondate
-		       case "status":
-			       issue.Fields.Status = &jira.Status{
-				       StatusCategory: f.issuesByKey[key].Fields.Status.StatusCategory,
-			       }
-		       case "priority":
-			       if f.issuesByKey[key].Fields.Priority != nil {
-				       issue.Fields.Priority = &jira.Priority{
-					       Name: f.issuesByKey[key].Fields.Priority.Name,
-				       }
-			       }
-		       }
-	       }
-	       issues = append(issues, issue)
-       }
-
-       sort.Slice(issues, func(i, j int) bool {
-	       return time.Time(issues[i].Fields.Resolutiondate).After(time.Time(issues[j].Fields.Resolutiondate))
-       })
-
-       if len(issues) > options.MaxResults {
-	       issues = issues[:options.MaxResults]
-       }
-       return issues, nil, nil
-}
 
 func (f *fakeJira) AddComment(issueID string, comment *jira.Comment) (*jira.Comment, *jira.Response, error) {
 	f.issuesByKey[issueID].Fields.Comments.Comments = append(f.issuesByKey[issueID].Fields.Comments.Comments, comment)

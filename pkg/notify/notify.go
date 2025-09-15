@@ -35,7 +35,7 @@ import (
 // TODO(bwplotka): Consider renaming this package to ticketer.
 
 type jiraIssueService interface {
-	SearchV2JQL(jql string, options *jira.SearchOptions) ([]jira.Issue, *jira.Response, error)
+	SearchV2JQL(jql string, options *jira.SearchOptionsV2) ([]jira.Issue, *jira.Response, error)
 	GetTransitions(id string) ([]jira.Transition, *jira.Response, error)
 
 	Create(issue *jira.Issue) (*jira.Issue, *jira.Response, error)
@@ -330,7 +330,7 @@ func (r *Receiver) search(projects []string, issueLabel string) (*jira.Issue, bo
 	// Search multiple projects in case issue was moved and further alert firings are desired in existing JIRA.
 	projectList := "'" + strings.Join(projects, "', '") + "'"
 	query := fmt.Sprintf("project in(%s) and labels=%q order by resolutiondate desc", projectList, issueLabel)
-	options := &jira.SearchOptions{
+	options := &jira.SearchOptionsV2{
 		Fields:     []string{"summary", "priority", "status", "resolution", "resolutiondate", "description", "comment"},
 		MaxResults: 2,
 	}
